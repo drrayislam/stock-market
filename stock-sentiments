@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# This script will analyze sentiments about stocks and will export to .csv
+
+
+# Multiple Stocks Sentiment from Yahoo finance, exported to cvs
+
+import requests
+from bs4 import BeautifulSoup
+import nltk
+from nltk.sentiment import SentimentIntensityAnalyzer
+import pandas as pd
+
+
+def get_news(ticker):
+    # Get the latest news articles for the specified stock from Yahoo Finance
+    url = f"https://finance.yahoo.com/quote/{ticker}/"
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, "html.parser")
+    results = soup.find_all("li", class_="js-stream-content")
+    news = []
+    for result in results:
+        headline = result.find("h3").text
+        news.append(headline)
+    return news
+
+
+def sentiment_analysis(news):
+    # Perform sentiment analysis on the news articles using the nltk library
+    nltk.download("vader_lexicon")
+    analyzer = SentimentIntensityAnalyzer()
+    sentiments = []
+    for article in news:
+        sentiment = analyzer.polarity_scores(article)["compound"]
+        sentiments.append(sentiment)
+    return sentiments
+
+
+def analyze_stock_sentiments(ticker):
+    # Get the news articles and perform sentiment analysis
+    news = get_news(ticker)
+    sentiments = sentiment_analysis(news)
+    if not sentiments:
+        return None
+    # Calculate the average sentiment of the news articles
+    avg_sentiment = sum(sentiments) / len(sentiments)
+    return avg_sentiment
+
+
+# Example usage for multiple stocks
+tickers = ["AAPL", "DVA", "KO", "META", "MSFT", "PATH", "PYPL"]
+sentiments = {}
+for ticker in tickers:
+    sentiment = analyze_stock_sentiments(ticker)
+    sentiments[ticker] = sentiment
+
+
+# Export the sentiment analysis results to a pandas DataFrame
+df = pd.DataFrame.from_dict(sentiments, orient="index", columns=["Sentiment"])
+df.index.name = "Ticker"
+
+
+# Write the DataFrame to a CSV file
+df.to_csv("stock_sentiments.csv")
