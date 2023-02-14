@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+# coding: utf-8
+# Written by Dr. Ray Islam
+#This code will analyze sentiment only from finance.yahoo.com/news/
+
+# In[27]:
+import requests
+from bs4 import BeautifulSoup
+import nltk
+from nltk.sentiment import SentimentIntensityAnalyzer
+
+import nltk
+nltk.download('vader_lexicon')
+
+
+# In[28]:
+
+# Get the html content from the website
+url = "https://finance.yahoo.com/news/"
+html_content = requests.get(url).content
+
+
+# In[29]:
+
+# Use BeautifulSoup to parse the html content
+soup = BeautifulSoup(html_content, "html.parser")
+
+# Find all the articles in the page
+articles = soup.find_all("h3")
+
+# Initialize the SentimentIntensityAnalyzer
+sia = SentimentIntensityAnalyzer()
+
+
+# In[30]:
+
+# Loop through each article and get its text
+for article in articles:
+    article_text = article.text
+    sentiment = sia.polarity_scores(article_text)["compound"]
+
+    # Print the article text and its sentiment
+    print("Article: ", article_text)
+    print("Sentiment: ", sentiment)
+    print("\n")
+
